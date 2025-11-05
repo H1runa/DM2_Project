@@ -1,7 +1,11 @@
 package com.hiruna.dm2_backend.service;
 
+import java.util.List;
 import java.util.Optional;
 
+import org.springframework.dao.CannotAcquireLockException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import com.hiruna.dm2_backend.data.model.BillReminder;
@@ -73,7 +77,35 @@ public class BillReminderService {
 
     }
 
+    //sync all function
+    public void syncAll(){
+        List<BillReminder> list = billReminderRepo.findByIsSynced(0);
+
+        if (!list.isEmpty()){
+            billReminderSyncService.syncAllInsertUpdate(list, record->{
+                billReminderSyncService.syncInsertToOracle(record, resp -> {markAsSynced(record.getRemindID());}, id-> {deleteReminderById(id);});
+                System.out.println("SYNC INSERT: Bill Reminder creation synced to oracle");
+            }, record -> {
+                billReminderSyncService.syncUpdateToORacle(record, resp -> {
+                        markAsSynced(record.getRemindID());
+                    }, err -> {
+                        markAsUnsynced(record.getRemindID());
+                    });
+                System.out.println("SYNC UPDATE: Bill Reminder update synced to oracle");
+            });
+        }
+
+        List<BillReminder> list_to_delete = billReminderRepo.findByIsDeleted(1);
+
+        if (!list_to_delete.isEmpty()){
+            billReminderSyncService.syncAllDelete(list_to_delete, record -> {billReminderSyncService.syncDeleteToOracle(record.getRemindID(), bool -> {
+                    deleteReminderById(record.getRemindID());
+                });});
+        }
+    }
+
     //marking the synced reminder
+    // @Retryable(value = {CannotAcquireLockException.class}, maxAttempts = 5, backoff = @Backoff(delay = 500))
     public void markAsSynced(long id){
         Optional<BillReminder> rem = billReminderRepo.findById(id);
         try{
@@ -87,6 +119,7 @@ public class BillReminderService {
     }
 
     //marking the unsynced reminder
+    // @Retryable(value = {CannotAcquireLockException.class}, maxAttempts = 3, backoff = @Backoff(delay = 100))
     public void markAsUnsynced(long id){
         Optional<BillReminder> rem = billReminderRepo.findById(id);
         try{

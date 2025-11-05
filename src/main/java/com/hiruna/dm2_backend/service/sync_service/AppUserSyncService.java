@@ -22,7 +22,7 @@ public class AppUserSyncService {
             .build();
     }
 
-    @Async
+    
     public void syncInsertToOracle(AppUser user, Consumer<Void> success){
         webClient.post()
             .uri("/api/appuser")
@@ -34,11 +34,11 @@ public class AppUserSyncService {
                 success.accept(null);
             })
             .doOnError(error -> System.err.println("ERROR: Syncing: "+error.getMessage()))
-            .subscribe();
+            .block();
         System.out.println("Finished syncing");
     }
 
-    @Async
+    
     public void syncUpdateToOracle(AppUser user, Consumer<Throwable> failure, Consumer<Void> success){
         webClient.put()
             .uri("/api/appuser")
@@ -48,10 +48,10 @@ public class AppUserSyncService {
             .toBodilessEntity()
             .doOnSuccess(response -> {System.out.println("Synced App User update with Oracle");success.accept(null);})
             .doOnError(error -> failure.accept(error))
-            .subscribe();            
+            .block();            
     }
 
-    @Async
+    
     public void syncDeleteToOracle(long id, Consumer<ResponseEntity<?>> success){
         webClient.delete()
             .uri("/api/appuser/"+id)
@@ -64,7 +64,7 @@ public class AppUserSyncService {
             .doOnError(err -> {
                 System.err.println("ERROR: Delete failed on oracle");
             })
-            .subscribe();
+            .block();
     }
 
     //function to check if a user exists in oracle

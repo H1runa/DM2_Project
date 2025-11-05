@@ -50,5 +50,11 @@ public class BillReminderController {
             return ResponseEntity.status(500).body(false);
         }
     }
+
+    @PostMapping("/sync")
+    public void syncAll() {
+        billReminderService.syncAll();
+    }
+    
     
 }

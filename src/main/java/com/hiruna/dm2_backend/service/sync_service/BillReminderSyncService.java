@@ -1,5 +1,6 @@
 package com.hiruna.dm2_backend.service.sync_service;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.springframework.http.MediaType;
@@ -21,7 +22,6 @@ public class BillReminderSyncService {
                             .build();
     }
 
-    @Async
     public void syncInsertToOracle(BillReminder rem, Consumer<ResponseEntity<?>> success, Consumer<Long> constraint_failed){
         webClient.post()
             .uri("/api/billreminder")
@@ -43,12 +43,11 @@ public class BillReminderSyncService {
                 }
                 System.err.println("ERROR: While sycing Bill reminder insert to oracle");     
                                         
-            }).subscribe();
+            }).block();
 
         
     }
 
-    @Async
     public void syncUpdateToORacle(BillReminder rem, Consumer<Boolean> success, Consumer<Void> failure){
         webClient.put()
             .uri("/api/billreminder")
@@ -61,10 +60,9 @@ public class BillReminderSyncService {
             }).doOnError(err -> {                
                 failure.accept(null);
             })
-            .subscribe();
+            .block();
     }
-
-    @Async
+    
     public void syncDeleteToOracle(long id, Consumer<Boolean> success){
         webClient.delete()
             .uri("/api/billreminder/"+id)
@@ -76,6 +74,36 @@ public class BillReminderSyncService {
             }).doOnError(err-> {
                 System.err.println("ERROR: Could not delete");
             })
-            .subscribe();
+            .block();
+    }
+
+    //function to check if a user exists in oracle
+    public Boolean checkIfExists(long id){
+        Boolean check = webClient.get()
+                            .uri("/api/billreminder/"+id+"/exists")
+                            .retrieve()
+                            .bodyToMono(Boolean.class)
+                            .block();
+        return check;            
+    }
+
+    @Async
+    public void syncAllInsertUpdate(List<BillReminder> list, Consumer<BillReminder> insert, Consumer<BillReminder> update){
+        for (BillReminder billReminder : list) {
+            //update
+            if (checkIfExists(billReminder.getRemindID())){
+                update.accept(billReminder);
+            } else {
+                //insert
+                insert.accept(billReminder);
+            }
+        }
+    }
+
+    @Async
+    public void syncAllDelete(List<BillReminder> list, Consumer<BillReminder> delete){
+        for (BillReminder billReminder : list) {
+            delete.accept(billReminder);
+        }
     }
 }
