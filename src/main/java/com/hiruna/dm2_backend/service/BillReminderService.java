@@ -50,6 +50,29 @@ public class BillReminderService {
         }
     }
 
+    public Boolean deleteReminder(long id){
+        try{
+            Optional<BillReminder> rem = billReminderRepo.findById(id);
+            if (rem.isPresent()){
+                BillReminder got_rem = rem.get();
+                got_rem.setIsDeleted(1);
+                billReminderRepo.save(got_rem);
+
+                billReminderSyncService.syncDeleteToOracle(id, bool -> {
+                    deleteReminderById(id);
+                });
+                return true;
+            } else {
+                System.err.println("ERROR: BillReminder not deleted (NOT_FOUND)");
+                return false;
+            }
+        } catch (Exception e){
+            System.err.println("ERROR: BillReminder not deleted");
+            return false;
+        }
+
+    }
+
     //marking the synced reminder
     public void markAsSynced(long id){
         Optional<BillReminder> rem = billReminderRepo.findById(id);
@@ -79,6 +102,6 @@ public class BillReminderService {
     //deleting reminder by id
     public void deleteReminderById(long id){
         billReminderRepo.deleteById(id);
-        System.out.println("SYNC FAIL: Bill Reminder deleted from local");
+        System.out.println("Bill Reminder deleted from local");
     }
 }

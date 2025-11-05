@@ -63,4 +63,19 @@ public class BillReminderSyncService {
             })
             .subscribe();
     }
+
+    @Async
+    public void syncDeleteToOracle(long id, Consumer<Boolean> success){
+        webClient.delete()
+            .uri("/api/billreminder/"+id)
+            .retrieve()
+            .bodyToMono(Boolean.class)
+            .doOnSuccess(resp -> {
+                System.out.println("BillReminder deletion synced with Oracle");
+                success.accept(resp);
+            }).doOnError(err-> {
+                System.err.println("ERROR: Could not delete");
+            })
+            .subscribe();
+    }
 }
