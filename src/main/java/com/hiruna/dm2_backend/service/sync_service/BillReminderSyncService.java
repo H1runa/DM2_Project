@@ -47,4 +47,20 @@ public class BillReminderSyncService {
 
         
     }
+
+    @Async
+    public void syncUpdateToORacle(BillReminder rem, Consumer<Boolean> success, Consumer<Void> failure){
+        webClient.put()
+            .uri("/api/billreminder")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(rem)
+            .retrieve()
+            .bodyToMono(Boolean.class)
+            .doOnSuccess(resp -> {
+                success.accept(resp);
+            }).doOnError(err -> {                
+                failure.accept(null);
+            })
+            .subscribe();
+    }
 }

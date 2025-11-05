@@ -18,12 +18,39 @@ public class BillReminderService {
         this.billReminderSyncService=billReminderSyncService;
     }
 
+    //inserting new reminder
     public BillReminder createReminder(BillReminder reminder){
         BillReminder saved_rem = billReminderRepo.save(reminder);
         billReminderSyncService.syncInsertToOracle(saved_rem, resp -> {markAsSynced(saved_rem.getRemindID());}, id-> {deleteReminderById(id);});
         return saved_rem;
     }
 
+    //updating reminder
+    public Boolean updateReminder(BillReminder reminder){
+        Optional<BillReminder> rem = billReminderRepo.findById(reminder.getRemindID());
+        if (rem.isPresent()){
+            BillReminder got_rem = rem.get();
+            got_rem.setRemindName(reminder.getRemindName());
+            got_rem.setDeadline(reminder.getDeadline());
+            got_rem.setStatus(reminder.getStatus());            
+            //no need to update user id
+            got_rem.setIsSynced(0);
+            got_rem.setIsDeleted(reminder.getIsDeleted());
+
+            billReminderRepo.save(got_rem);
+            billReminderSyncService.syncUpdateToORacle(got_rem, resp -> {
+                markAsSynced(got_rem.getRemindID());
+            }, err -> {
+                markAsUnsynced(got_rem.getRemindID());
+            });
+            return true;
+        } else {
+            System.out.println("ERROR: Failed to update BillReminder");            
+            return false;
+        }
+    }
+
+    //marking the synced reminder
     public void markAsSynced(long id){
         Optional<BillReminder> rem = billReminderRepo.findById(id);
         try{
@@ -36,6 +63,20 @@ public class BillReminderService {
         }
     }
 
+    //marking the unsynced reminder
+    public void markAsUnsynced(long id){
+        Optional<BillReminder> rem = billReminderRepo.findById(id);
+        try{
+            BillReminder got_rem = rem.get();
+            got_rem.setIsSynced(0);
+            billReminderRepo.save(got_rem);
+        } catch(Exception e){            
+            System.err.println("ERROR: Failed to mark as synced");
+            e.printStackTrace();
+        }
+    }
+
+    //deleting reminder by id
     public void deleteReminderById(long id){
         billReminderRepo.deleteById(id);
         System.out.println("SYNC FAIL: Bill Reminder deleted from local");
