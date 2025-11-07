@@ -15,7 +15,7 @@ public class BillReminder implements SyncModel {
     @Id
     @Column(name = "remindID")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long remindID;
+    private Long remindID;
 
     @Column(name = "remindName")
     private String remindName;
@@ -27,7 +27,7 @@ public class BillReminder implements SyncModel {
     private String status;
 
     @Column(name = "userID")
-    private long userID;
+    private Long userID;
 
     @Column(name = "isSynced")
     private int isSynced;
@@ -38,7 +38,7 @@ public class BillReminder implements SyncModel {
     public BillReminder() {
     }
     
-    public BillReminder(long remindID, String remindName, String deadline, String status, long userID, int isSynced,
+    public BillReminder(Long remindID, String remindName, String deadline, String status, Long userID, int isSynced,
             int isDeleted) {
         this.remindID = remindID;
         this.remindName = remindName;
@@ -49,11 +49,11 @@ public class BillReminder implements SyncModel {
         this.isDeleted = isDeleted;
     }
 
-    public long getRemindID() {
+    public Long getRemindID() {
         return remindID;
     }
 
-    public void setRemindID(long remindID) {
+    public void setRemindID(Long remindID) {
         this.remindID = remindID;
     }
 
@@ -81,32 +81,32 @@ public class BillReminder implements SyncModel {
         this.status = status;
     }
 
-    public long getUserID() {
+    public Long getUserID() {
         return userID;
     }
 
-    public void setUserID(long userID) {
+    public void setUserID(Long userID) {
         this.userID = userID;
     }
-
+    @Override
     public int getIsSynced() {
         return isSynced;
     }
-
+    @Override
     public void setIsSynced(int isSynced) {
         this.isSynced = isSynced;
     }
-
+    @Override
     public int getIsDeleted() {
         return isDeleted;
     }
-
+    @Override
     public void setIsDeleted(int isDeleted) {
         this.isDeleted = isDeleted;
     }
 
     @Override
-    public long getId(){
+    public Long getId(){
         return this.remindID;
     }            
 }

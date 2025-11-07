@@ -21,7 +21,7 @@ public class GenericSyncService {
         this.webclient=builder.baseUrl("http://localhost:8002/oracle").build();
     }
 
-    public <T> void syncInsertToOracle(T entity, long entityId,  String syncUrl, Consumer<ResponseEntity<?>> success, Consumer<Long> constraint_failed){
+    public <T> void syncInsertToOracle(T entity, Long entityId,  String syncUrl, Consumer<ResponseEntity<?>> success, Consumer<Long> constraint_failed){
         webclient.post()
             .uri(syncUrl)
             .contentType(MediaType.APPLICATION_JSON)
@@ -64,7 +64,7 @@ public class GenericSyncService {
             .block();
     }
 
-    public void syncDeleteToOracle(long id, String syncUrl,  Consumer<Boolean> success){
+    public void syncDeleteToOracle(Long id, String syncUrl,  Consumer<Boolean> success){
         webclient.delete()
             .uri(syncUrl+"/"+id)
             .retrieve()
@@ -80,7 +80,7 @@ public class GenericSyncService {
     }
 
      //function to check if a user exists in oracle
-    public Boolean checkIfExists(long id, String syncUrl){
+    public Boolean checkIfExists(Long id, String syncUrl){
         Boolean check = webclient.get()
                             .uri(syncUrl+"/"+id+"/exists")
                             .retrieve()

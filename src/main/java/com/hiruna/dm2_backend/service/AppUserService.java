@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import com.hiruna.dm2_backend.data.model.AppUser;
 import com.hiruna.dm2_backend.data.repo.AppUser.SQLite.AppUserRepo;
+import com.hiruna.dm2_backend.data.repo.BillReminder.SQLite.BillReminderRepo;
 import com.hiruna.dm2_backend.service.sync_service.AppUserSyncService;
 import com.hiruna.dm2_backend.service.sync_service.GenericSyncService;
 
@@ -15,20 +16,25 @@ public class AppUserService {
     private AppUserRepo appUserRepo;
     private AppUserSyncService appUserSyncService;
     private GenericSyncService genericSyncService;
+    private GenericEntityService genericEntityService;
 
-    public AppUserService(AppUserRepo appUserRepo, AppUserSyncService appUserSyncService, GenericSyncService genericSyncService){
+    public AppUserService(AppUserRepo appUserRepo, AppUserSyncService appUserSyncService, GenericSyncService genericSyncService, GenericEntityService genericEntityService){
         this.appUserRepo=appUserRepo;        
         this.appUserSyncService=appUserSyncService;
         this.genericSyncService=genericSyncService;
+        this.genericEntityService=genericEntityService;        
     }    
 
     //create user
-    public AppUser createAppUser(AppUser user){        
-        AppUser saved_user = appUserRepo.save(user);       
-        // appUserSyncService.syncInsertToOracle(saved_user, success -> {markUserAsSynced(saved_user);System.out.println("Synced with Oracle");});
-        genericSyncService.syncInsertToOracle(user, user.getUserID(), "/api/appuser", success -> {markUserAsSynced(saved_user);}, null);
+    // public AppUser createAppUser(AppUser user){        
+    //     AppUser saved_user = appUserRepo.save(user);       
+    //     // appUserSyncService.syncInsertToOracle(saved_user, success -> {markUserAsSynced(saved_user);System.out.println("Synced with Oracle");});
+    //     genericSyncService.syncInsertToOracle(user, user.getUserID(), "/api/appuser", success -> {markUserAsSynced(saved_user);}, null);
 
-        return saved_user;
+    //     return saved_user;
+    // }
+    public AppUser createAppUser(AppUser user){
+        return genericEntityService.insertRecord(appUserRepo, user, "/api/appuser");
     }
 
     //update user
@@ -58,28 +64,31 @@ public class AppUserService {
     }
 
     //delete user
-    public Boolean deleteAppUser(long id){
-        try{
-            Optional<AppUser> user = appUserRepo.findById(id);
-            if (user.isPresent()){
-                AppUser got_user = user.get();
-                got_user.setIsDeleted(1);
-                appUserRepo.save(got_user); 
+    // public Boolean deleteAppUser(Long id){
+    //     try{
+    //         Optional<AppUser> user = appUserRepo.findById(id);
+    //         if (user.isPresent()){
+    //             AppUser got_user = user.get();
+    //             got_user.setIsDeleted(1);
+    //             appUserRepo.save(got_user); 
 
-                // appUserSyncService.syncDeleteToOracle(got_user.getUserID(), success->{
-                //     appUserRepo.deleteById(got_user.getUserID());
-                // });
-                genericSyncService.syncDeleteToOracle(got_user.getUserID(), "/api/appuser", success->appUserRepo.deleteById(got_user.getUserID()));
-                return true;               
-            } else {
-                System.err.println("ERROR: Could not mark record as deleted");
-                return false;
-            }
-        } catch (Exception e){
-            System.err.println("ERROR: Could not mark record as deleted");
-            e.printStackTrace();            
-            return false;
-        }
+    //             // appUserSyncService.syncDeleteToOracle(got_user.getUserID(), success->{
+    //             //     appUserRepo.deleteById(got_user.getUserID());
+    //             // });
+    //             genericSyncService.syncDeleteToOracle(got_user.getUserID(), "/api/appuser", success->appUserRepo.deleteById(got_user.getUserID()));
+    //             return true;               
+    //         } else {
+    //             System.err.println("ERROR: Could not mark record as deleted");
+    //             return false;
+    //         }
+    //     } catch (Exception e){
+    //         System.err.println("ERROR: Could not mark record as deleted");
+    //         e.printStackTrace();            
+    //         return false;
+    //     }
+    // }
+    public Boolean deleteAppUser(Long id){
+        return genericEntityService.deleteRecord(appUserRepo, id, "/api/appuser");
     }
 
     //mark sync
@@ -110,59 +119,62 @@ public class AppUserService {
     }
 
     //sync all
-    public void syncAll(){
-        //syncing inserts and updates
-        List<AppUser> list = appUserRepo.findByIsSynced(0);
+    // public void syncAll(){
+    //     //syncing inserts and updates
+    //     List<AppUser> list = appUserRepo.findByIsSynced(0);
 
-        if (!list.isEmpty()) {
-            // appUserSyncService.syncAllInsertUpdate(list, user->{
-            //         appUserSyncService.syncInsertToOracle(user , success -> {
-            //             markUserAsSynced(user);
-            //             System.out.println("SYNC INSERT: User ID ("+user.getUserID()+") has been synced");
-            //         });
-            //     }, user -> {
-            //         appUserSyncService.syncUpdateToOracle(user, failure -> {
-            //                     markUserAsUnsynced(user);
-            //                 }, success-> {
-            //                     markUserAsSynced(user);
-            //                     System.out.println("SYNC UPDATE: User ID ("+user.getUserID()+") has been synced");
-            //                 });
-            //     });
-            genericSyncService.syncAllInsertUpdate(list, "/api/appuser" , user->{
-                    // appUserSyncService.syncInsertToOracle(user , success -> {
-                    //     markUserAsSynced(user);
-                    //     System.out.println("SYNC INSERT: User ID ("+user.getUserID()+") has been synced");
-                    // });
-                    genericSyncService.syncInsertToOracle(user, user.getUserID(), "/api/appuser", success->markUserAsSynced(user), null);
-                }, user -> {
-                    // appUserSyncService.syncUpdateToOracle(user, failure -> {
-                    //             markUserAsUnsynced(user);
-                    //         }, success-> {
-                    //             markUserAsSynced(user);
-                    //             System.out.println("SYNC UPDATE: User ID ("+user.getUserID()+") has been synced");
-                    //         });
-                    genericSyncService.syncUpdateToOracle(user, "/api/appuser", success->markUserAsSynced(user), failure->markUserAsUnsynced(user));
-                });                    
-        };
+    //     if (!list.isEmpty()) {
+    //         // appUserSyncService.syncAllInsertUpdate(list, user->{
+    //         //         appUserSyncService.syncInsertToOracle(user , success -> {
+    //         //             markUserAsSynced(user);
+    //         //             System.out.println("SYNC INSERT: User ID ("+user.getUserID()+") has been synced");
+    //         //         });
+    //         //     }, user -> {
+    //         //         appUserSyncService.syncUpdateToOracle(user, failure -> {
+    //         //                     markUserAsUnsynced(user);
+    //         //                 }, success-> {
+    //         //                     markUserAsSynced(user);
+    //         //                     System.out.println("SYNC UPDATE: User ID ("+user.getUserID()+") has been synced");
+    //         //                 });
+    //         //     });
+    //         genericSyncService.syncAllInsertUpdate(list, "/api/appuser" , user->{
+    //                 // appUserSyncService.syncInsertToOracle(user , success -> {
+    //                 //     markUserAsSynced(user);
+    //                 //     System.out.println("SYNC INSERT: User ID ("+user.getUserID()+") has been synced");
+    //                 // });
+    //                 genericSyncService.syncInsertToOracle(user, user.getUserID(), "/api/appuser", success->markUserAsSynced(user), null);
+    //             }, user -> {
+    //                 // appUserSyncService.syncUpdateToOracle(user, failure -> {
+    //                 //             markUserAsUnsynced(user);
+    //                 //         }, success-> {
+    //                 //             markUserAsSynced(user);
+    //                 //             System.out.println("SYNC UPDATE: User ID ("+user.getUserID()+") has been synced");
+    //                 //         });
+    //                 genericSyncService.syncUpdateToOracle(user, "/api/appuser", success->markUserAsSynced(user), failure->markUserAsUnsynced(user));
+    //             });                    
+    //     };
 
         
-        //syncing deletions
-        List<AppUser> list_to_delete = appUserRepo.findByIsDeleted(1);        
-        // if (!list_to_delete.isEmpty()){
-        //     appUserSyncService.syncAllDeletions(list_to_delete, user -> {
-        //         appUserSyncService.syncDeleteToOracle(user.getUserID(), delete -> {
-        //             appUserRepo.deleteById(user.getUserID());
-        //             System.out.println("SYNC DELETE: User ID ("+user.getUserID()+") has been synced");
-        //         });
-        //     });
-        // }
-        if (!list_to_delete.isEmpty()){
-            genericSyncService.syncAllDelete(list_to_delete, user->{
-                genericSyncService.syncDeleteToOracle(user.getId(), "/api/appuser", delete->{
-                    appUserRepo.deleteById(user.getId());
-                    System.out.println("Delete Synced.");
-                });
-            });
-        }        
+    //     //syncing deletions
+    //     List<AppUser> list_to_delete = appUserRepo.findByIsDeleted(1);        
+    //     // if (!list_to_delete.isEmpty()){
+    //     //     appUserSyncService.syncAllDeletions(list_to_delete, user -> {
+    //     //         appUserSyncService.syncDeleteToOracle(user.getUserID(), delete -> {
+    //     //             appUserRepo.deleteById(user.getUserID());
+    //     //             System.out.println("SYNC DELETE: User ID ("+user.getUserID()+") has been synced");
+    //     //         });
+    //     //     });
+    //     // }
+    //     if (!list_to_delete.isEmpty()){
+    //         genericSyncService.syncAllDelete(list_to_delete, user->{
+    //             genericSyncService.syncDeleteToOracle(user.getId(), "/api/appuser", delete->{
+    //                 appUserRepo.deleteById(user.getId());
+    //                 System.out.println("Delete Synced.");
+    //             });
+    //         });
+    //     }        
+    // }
+    public void syncAll(){
+        genericEntityService.syncAll(appUserRepo, "/api/appuser");
     }
 }

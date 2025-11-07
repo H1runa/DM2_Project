@@ -9,7 +9,7 @@ public class AppUser implements SyncModel {
     @Id
     @Column(name = "userID")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long userID;
+    private Long userID;
 
     @Column(name = "accountName")
     private String accountName;
@@ -26,7 +26,7 @@ public class AppUser implements SyncModel {
     public AppUser() {
     }
 
-    public AppUser(long userID, String accountName, String password, int isSynced, int isDeleted) {
+    public AppUser(Long userID, String accountName, String password, int isSynced, int isDeleted) {
         this.userID = userID;
         this.accountName = accountName;
         this.password = password;
@@ -34,11 +34,11 @@ public class AppUser implements SyncModel {
         this.isDeleted = isDeleted;
     }
 
-    public long getUserID() {
+    public Long getUserID() {
         return userID;
     }
 
-    public void setUserID(long userID) {
+    public void setUserID(Long userID) {
         this.userID = userID;
     }
 
@@ -58,23 +58,26 @@ public class AppUser implements SyncModel {
         this.password = password;
     }
 
+    @Override
     public int getIsSynced() {
         return isSynced;
     }
 
+    @Override
     public void setIsSynced(int isSynced) {
         this.isSynced = isSynced;
     }
+    @Override
     public int getIsDeleted() {
         return isDeleted;
     }
-
+    @Override
     public void setIsDeleted(int isDeleted) {
         this.isDeleted = isDeleted;
     }
 
     @Override
-    public long getId(){
+    public Long getId(){
         return this.userID;
     }
     

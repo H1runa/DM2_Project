@@ -1,5 +1,9 @@
 package com.hiruna.dm2_backend.interfaces;
 
 public interface SyncModel {
-    long getId();
+    Long getId();
+    void setIsSynced(int value);
+    int getIsSynced();
+    void setIsDeleted(int value);
+    int getIsDeleted();
 }
