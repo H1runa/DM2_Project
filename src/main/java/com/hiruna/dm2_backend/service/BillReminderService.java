@@ -11,21 +11,25 @@ import org.springframework.stereotype.Service;
 import com.hiruna.dm2_backend.data.model.BillReminder;
 import com.hiruna.dm2_backend.data.repo.BillReminder.SQLite.BillReminderRepo;
 import com.hiruna.dm2_backend.service.sync_service.BillReminderSyncService;
+import com.hiruna.dm2_backend.service.sync_service.GenericSyncService;
 
 @Service
 public class BillReminderService {
     private BillReminderRepo billReminderRepo;
     private BillReminderSyncService billReminderSyncService;
+    private GenericSyncService genericSyncService;
 
-    public BillReminderService(BillReminderRepo billReminderRepo, BillReminderSyncService billReminderSyncService){
+    public BillReminderService(BillReminderRepo billReminderRepo, BillReminderSyncService billReminderSyncService, GenericSyncService genericSyncService){
         this.billReminderRepo=billReminderRepo;
         this.billReminderSyncService=billReminderSyncService;
+        this.genericSyncService=genericSyncService;
     }
 
     //inserting new reminder
     public BillReminder createReminder(BillReminder reminder){
         BillReminder saved_rem = billReminderRepo.save(reminder);
-        billReminderSyncService.syncInsertToOracle(saved_rem, resp -> {markAsSynced(saved_rem.getRemindID());}, id-> {deleteReminderById(id);});
+        // billReminderSyncService.syncInsertToOracle(saved_rem, resp -> {markAsSynced(saved_rem.getRemindID());}, id-> {deleteReminderById(id);});
+        genericSyncService.syncInsertToOracle(saved_rem, saved_rem.getRemindID(), "/api/billreminder", resp -> {markAsSynced(saved_rem.getRemindID());}, id-> {deleteReminderById(id);});
         return saved_rem;
     }
 
@@ -47,6 +51,7 @@ public class BillReminderService {
             }, err -> {
                 markAsUnsynced(got_rem.getRemindID());
             });
+            genericSyncService.syncUpdateToOracle(got_rem,"/api/billreminder" ,resp -> markAsSynced(got_rem.getRemindID()), err -> markAsUnsynced(got_rem.getRemindID()));
             return true;
         } else {
             System.out.println("ERROR: Failed to update BillReminder");            
@@ -62,9 +67,10 @@ public class BillReminderService {
                 got_rem.setIsDeleted(1);
                 billReminderRepo.save(got_rem);
 
-                billReminderSyncService.syncDeleteToOracle(id, bool -> {
-                    deleteReminderById(id);
-                });
+                // billReminderSyncService.syncDeleteToOracle(id, bool -> {
+                //     deleteReminderById(id);
+                // });
+                genericSyncService.syncDeleteToOracle(got_rem.getRemindID(), "/api/billreminder", bool->deleteReminder(id));
                 return true;
             } else {
                 System.err.println("ERROR: BillReminder not deleted (NOT_FOUND)");

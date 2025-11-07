@@ -1,9 +1,11 @@
 package com.hiruna.dm2_backend.data.model;
+import com.hiruna.dm2_backend.interfaces.SyncModel;
+
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "APPUSER")
-public class AppUser {
+public class AppUser implements SyncModel {
     @Id
     @Column(name = "userID")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -69,6 +71,11 @@ public class AppUser {
 
     public void setIsDeleted(int isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    @Override
+    public long getId(){
+        return this.userID;
     }
     
     
