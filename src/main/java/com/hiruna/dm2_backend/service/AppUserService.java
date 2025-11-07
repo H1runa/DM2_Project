@@ -38,29 +38,37 @@ public class AppUserService {
     }
 
     //update user
-    public Boolean updateAppUser(AppUser user){
-        try{
-            Optional<AppUser> retrieved_user = appUserRepo.findById(user.getUserID());
-            if (retrieved_user.isPresent()){
-                    AppUser got_user = retrieved_user.get();
-                    got_user.setAccountName(user.getAccountName());
-                    got_user.setPassword(user.getPassword());
-                    got_user.setIsSynced(user.getIsSynced());
+    // public Boolean updateAppUser(AppUser user){
+    //     try{
+    //         Optional<AppUser> retrieved_user = appUserRepo.findById(user.getUserID());
+    //         if (retrieved_user.isPresent()){
+    //                 AppUser got_user = retrieved_user.get();
+    //                 got_user.setAccountName(user.getAccountName());
+    //                 got_user.setPassword(user.getPassword());
+    //                 got_user.setIsSynced(user.getIsSynced());
 
-                    appUserRepo.save(got_user);
-                    // appUserSyncService.syncUpdateToOracle(got_user, failure -> {
-                    //     markUserAsUnsynced(got_user);
-                    // }, success-> markUserAsSynced(got_user));
-                    genericSyncService.syncUpdateToOracle(got_user, "/api/appuser", success-> markUserAsSynced(got_user), failure -> markUserAsUnsynced(got_user));
-                    return true;
-            } else {
-                System.out.println("ERROR: User ID ("+user.getUserID()+") not found in the database.");
-                return false;
-            }            
-        } catch (Exception e){
-            e.printStackTrace();
-            return false;
-        }        
+    //                 appUserRepo.save(got_user);
+    //                 // appUserSyncService.syncUpdateToOracle(got_user, failure -> {
+    //                 //     markUserAsUnsynced(got_user);
+    //                 // }, success-> markUserAsSynced(got_user));
+    //                 genericSyncService.syncUpdateToOracle(got_user, "/api/appuser", success-> markUserAsSynced(got_user), failure -> markUserAsUnsynced(got_user));
+    //                 return true;
+    //         } else {
+    //             System.out.println("ERROR: User ID ("+user.getUserID()+") not found in the database.");
+    //             return false;
+    //         }            
+    //     } catch (Exception e){
+    //         e.printStackTrace();
+    //         return false;
+    //     }        
+    // }
+    public Boolean updateAppUser(AppUser user){
+        return genericEntityService.updateRecord(appUserRepo, user, "/api/appuser", (entity, updated)->{
+            entity.setAccountName(updated.getAccountName());
+            entity.setPassword(updated.getPassword());
+            entity.setIsSynced(0);
+            entity.setIsDeleted(updated.getIsDeleted());
+        });
     }
 
     //delete user

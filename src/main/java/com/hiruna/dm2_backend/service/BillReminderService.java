@@ -27,95 +27,53 @@ public class BillReminderService {
         this.genericEntityService=genericEntityService;
     }
 
-    //inserting new reminder
-    // public BillReminder createReminder(BillReminder reminder){
-    //     BillReminder saved_rem = billReminderRepo.save(reminder);
-    //     // billReminderSyncService.syncInsertToOracle(saved_rem, resp -> {markAsSynced(saved_rem.getRemindID());}, id-> {deleteReminderById(id);});
-    //     genericSyncService.syncInsertToOracle(saved_rem, saved_rem.getRemindID(), "/api/billreminder", resp -> {markAsSynced(saved_rem.getRemindID());}, id-> {deleteReminderById(id);});
-    //     return saved_rem;
-    // }
     public BillReminder createReminder(BillReminder reminder){
         return genericEntityService.insertRecord(billReminderRepo, reminder, "/api/billreminder");
     }
 
     //updating reminder
-    public Boolean updateReminder(BillReminder reminder){
-        Optional<BillReminder> rem = billReminderRepo.findById(reminder.getRemindID());
-        if (rem.isPresent()){
-            BillReminder got_rem = rem.get();
-            got_rem.setRemindName(reminder.getRemindName());
-            got_rem.setDeadline(reminder.getDeadline());
-            got_rem.setStatus(reminder.getStatus());            
-            //no need to update user id
-            got_rem.setIsSynced(0);
-            got_rem.setIsDeleted(reminder.getIsDeleted());
+    // public Boolean updateReminder(BillReminder reminder){
+    //     Optional<BillReminder> rem = billReminderRepo.findById(reminder.getRemindID());
+    //     if (rem.isPresent()){
+    //         BillReminder got_rem = rem.get();
+    //         got_rem.setRemindName(reminder.getRemindName());
+    //         got_rem.setDeadline(reminder.getDeadline());
+    //         got_rem.setStatus(reminder.getStatus());            
+    //         //no need to update user id
+    //         got_rem.setIsSynced(0);
+    //         got_rem.setIsDeleted(reminder.getIsDeleted());
 
-            billReminderRepo.save(got_rem);
-            billReminderSyncService.syncUpdateToORacle(got_rem, resp -> {
-                markAsSynced(got_rem.getRemindID());
-            }, err -> {
-                markAsUnsynced(got_rem.getRemindID());
-            });
-            genericSyncService.syncUpdateToOracle(got_rem,"/api/billreminder" ,resp -> markAsSynced(got_rem.getRemindID()), err -> markAsUnsynced(got_rem.getRemindID()));
-            return true;
-        } else {
-            System.out.println("ERROR: Failed to update BillReminder");            
-            return false;
-        }
-    }
-
-    // public Boolean deleteReminder(long id){
-    //     try{
-    //         Optional<BillReminder> rem = billReminderRepo.findById(id);
-    //         if (rem.isPresent()){
-    //             BillReminder got_rem = rem.get();
-    //             got_rem.setIsDeleted(1);
-    //             billReminderRepo.save(got_rem);
-
-    //             // billReminderSyncService.syncDeleteToOracle(id, bool -> {
-    //             //     deleteReminderById(id);
-    //             // });
-    //             genericSyncService.syncDeleteToOracle(got_rem.getRemindID(), "/api/billreminder", bool->deleteReminderById(id));
-    //             return true;
-    //         } else {
-    //             System.err.println("ERROR: BillReminder not deleted (NOT_FOUND)");
-    //             return false;
-    //         }
-    //     } catch (Exception e){
-    //         System.err.println("ERROR: BillReminder not deleted");
+    //         billReminderRepo.save(got_rem);
+    //         billReminderSyncService.syncUpdateToORacle(got_rem, resp -> {
+    //             markAsSynced(got_rem.getRemindID());
+    //         }, err -> {
+    //             markAsUnsynced(got_rem.getRemindID());
+    //         });
+    //         genericSyncService.syncUpdateToOracle(got_rem,"/api/billreminder" ,resp -> markAsSynced(got_rem.getRemindID()), err -> markAsUnsynced(got_rem.getRemindID()));
+    //         return true;
+    //     } else {
+    //         System.out.println("ERROR: Failed to update BillReminder");            
     //         return false;
     //     }
-
     // }
+    public Boolean updateReminder(BillReminder reminder){
+        return genericEntityService.updateRecord(billReminderRepo, reminder, "/api/billreminder", (entity, updated)-> {
+            entity.setRemindName(updated.getRemindName());
+            entity.setDeadline(updated.getDeadline());
+            entity.setStatus(updated.getStatus());
+            entity.setIsSynced(0);
+            entity.setIsDeleted(updated.getIsDeleted());
+        });
+    }
+
+   
     public Boolean deleteReminder(Long id){
         return genericEntityService.deleteRecord(billReminderRepo, id, "/api/billreminder");
     }
 
     //sync all function
-    public void syncAll(){
-        List<BillReminder> list = billReminderRepo.findByIsSynced(0);
-
-        if (!list.isEmpty()){
-            billReminderSyncService.syncAllInsertUpdate(list, record->{
-                billReminderSyncService.syncInsertToOracle(record, resp -> {markAsSynced(record.getRemindID());}, id-> {deleteReminderById(id);});
-                System.out.println("SYNC INSERT: Bill Reminder creation synced to oracle");
-            }, record -> {
-                billReminderSyncService.syncUpdateToORacle(record, resp -> {
-                        markAsSynced(record.getRemindID());
-                    }, err -> {
-                        markAsUnsynced(record.getRemindID());
-                    });
-                System.out.println("SYNC UPDATE: Bill Reminder update synced to oracle");
-            });
-        }
-
-        List<BillReminder> list_to_delete = billReminderRepo.findByIsDeleted(1);
-
-        if (!list_to_delete.isEmpty()){
-            billReminderSyncService.syncAllDelete(list_to_delete, record -> {billReminderSyncService.syncDeleteToOracle(record.getRemindID(), bool -> {
-                    deleteReminderById(record.getRemindID());
-                });});
-        }
+    public void syncAll(){       
+        genericEntityService.syncAll(billReminderRepo, "/api/billreminder");
     }
 
     //marking the synced reminder
