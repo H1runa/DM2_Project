@@ -3,6 +3,7 @@ package com.hiruna.dm2_backend.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.hiruna.dm2_backend.data.dto.AccountDTO;
 import com.hiruna.dm2_backend.data.model.Account;
 import com.hiruna.dm2_backend.service.AccountService;
 
@@ -25,7 +26,7 @@ public class AccountController {
     }
 
     @PostMapping("")
-    public ResponseEntity<?> createAccount(@RequestBody Account entity) {
+    public ResponseEntity<?> createAccount(@RequestBody AccountDTO entity) {
         try{
             return ResponseEntity.ok(accountService.createAccount(entity));
         } catch(Exception e){
@@ -33,28 +34,28 @@ public class AccountController {
         }
     }
 
-    @PutMapping("")
-    public ResponseEntity<Boolean> updateAccount(@RequestBody Account entity) {
-        try{
-            return ResponseEntity.ok(accountService.updateAccount(entity));
-        } catch(Exception e){
-            return ResponseEntity.status(500).body(false);
-        }
-    }
+    // @PutMapping("")
+    // public ResponseEntity<Boolean> updateAccount(@RequestBody Account entity) {
+    //     try{
+    //         return ResponseEntity.ok(accountService.updateAccount(entity));
+    //     } catch(Exception e){
+    //         return ResponseEntity.status(500).body(false);
+    //     }
+    // }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Boolean> deleteAccount(@PathVariable Long id){
-        try{
-            return ResponseEntity.ok(accountService.deleteAccount(id));
-        } catch(Exception e){
-            return ResponseEntity.status(500).body(false);
-        }
-    }
+    // @DeleteMapping("/{id}")
+    // public ResponseEntity<Boolean> deleteAccount(@PathVariable Long id){
+    //     try{
+    //         return ResponseEntity.ok(accountService.deleteAccount(id));
+    //     } catch(Exception e){
+    //         return ResponseEntity.status(500).body(false);
+    //     }
+    // }
 
-    @PostMapping("/sync")
-    public void syncAll() {
-        accountService.syncAll();
-    }
+    // @PostMapping("/sync")
+    // public void syncAll() {
+    //     accountService.syncAll();
+    // }
     
     
 }

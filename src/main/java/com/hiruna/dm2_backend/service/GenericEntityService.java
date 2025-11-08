@@ -11,19 +11,31 @@ import com.hiruna.dm2_backend.interfaces.SyncModel;
 import com.hiruna.dm2_backend.interfaces.SyncRepo;
 import com.hiruna.dm2_backend.service.sync_service.GenericSyncService;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
+
 @Service
 public class GenericEntityService {
     private GenericSyncService genericSyncService;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     public GenericEntityService(GenericSyncService genericSyncService){
         this.genericSyncService=genericSyncService;
     };
-
+    
     //inserting records
+    @Transactional
     public <T extends SyncModel> T insertRecord(JpaRepository<T, Long> repo, T entity, String syncUrl){
-        T saved_record = repo.save(entity);
+        // T saved_record = repo.save(entity);
+        entityManager.persist(entity);
+        entityManager.flush();
+        entityManager.refresh(entity);
+
         genericSyncService.syncInsertToOracle(entity, entity.getId(), syncUrl, success -> {markAsSynced(entity, repo);}, id -> {deleteRecord(repo, id);});
-        return saved_record;
+        return entity;
     }
 
     //updating reminder

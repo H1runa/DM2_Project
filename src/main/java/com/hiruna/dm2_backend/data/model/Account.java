@@ -26,10 +26,10 @@ public class Account implements SyncModel{
     @Column(name = "balance")
     private Double balance;
 
-    @Column(name = "createdDate")
+    @Column(name = "createdDate", insertable = false)
     private String createdDate;
 
-    @Column(name = "status")
+    @Column(name = "status", insertable = false)
     private String status;
 
     @Column(name = "initialAmount")
