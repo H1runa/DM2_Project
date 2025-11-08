@@ -3,7 +3,7 @@ package com.hiruna.dm2_backend.service;
 import org.springframework.stereotype.Service;
 
 import com.hiruna.dm2_backend.data.model.BillReminder;
-import com.hiruna.dm2_backend.data.repo.BillReminder.SQLite.BillReminderRepo;
+import com.hiruna.dm2_backend.data.repo.BillReminderRepo;
 
 @Service
 public class BillReminderService {

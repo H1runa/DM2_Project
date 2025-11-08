@@ -1,4 +1,4 @@
-package com.hiruna.dm2_backend.data.repo.BillReminder.SQLite;
+package com.hiruna.dm2_backend.data.repo;
 
 import java.util.List;
 

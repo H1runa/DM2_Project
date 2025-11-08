@@ -1,4 +1,4 @@
-package com.hiruna.dm2_backend.data.repo.AppUser.SQLite;
+package com.hiruna.dm2_backend.data.repo;
 
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.JpaRepository;

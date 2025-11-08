@@ -2,7 +2,7 @@ package com.hiruna.dm2_backend.service;
 
 import org.springframework.stereotype.Service;
 import com.hiruna.dm2_backend.data.model.AppUser;
-import com.hiruna.dm2_backend.data.repo.AppUser.SQLite.AppUserRepo;
+import com.hiruna.dm2_backend.data.repo.AppUserRepo;
 
 @Service
 public class AppUserService {
