@@ -2,6 +2,7 @@ package com.hiruna.dm2_backend.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
@@ -68,6 +69,7 @@ public class AccountService {
         return true;
     }  
     
+    //this needs to be a seperate method for it to commit the changes into sqlite db
     @Transactional
     public Account insertAccountSQLite(AccountDTO dto){
         Account acc = new Account();
@@ -130,32 +132,6 @@ public class AccountService {
             System.err.println(ex.getMessage());
         }        
     }
-//     public <T extends SyncModel> void markAsSynced(T entity, JpaRepository<T, Long> repo){
-//     try{            
-//         System.out.println("=== MARK AS SYNCED DEBUG ===");
-//         System.out.println("Entity class: " + entity.getClass().getSimpleName());
-//         System.out.println("Entity ID: " + entity.getId());
-//         System.out.println("Repository class: " + repo.getClass().getSimpleName());
-//         System.out.println("Entity toString: " + entity.toString());
-        
-//         // Check what's actually in the database
-//         long count = repo.count();
-//         System.out.println("Total entities in repo: " + count);
-        
-//         // Try to find ALL entities to see what's there
-//         List<T> allEntities = repo.findAll();
-//         System.out.println("All entity IDs in repo: " + 
-//             allEntities.stream().map(e -> e.getId()).collect(Collectors.toList()));
-                
-//         T ret_entity = repo.findById(entity.getId()).get();            
-//         ret_entity.setIsSynced(1);
-//         repo.save(ret_entity);
-//         System.out.println("Successfully marked as synced");
-//     } catch (Exception ex){
-//         System.err.println("FAILED to mark as synced");
-//         ex.printStackTrace();
-//     }        
-// }
 
     //mark unsync
     public <T extends SyncModel> void markAsUnsynced(Long id, JpaRepository<T, Long> repo){
@@ -177,12 +153,68 @@ public class AccountService {
     public <T extends SyncModel> void deleteRecord(JpaRepository<T, Long> repo, Long id){
         repo.deleteById(id);        
     }
+    
+    //update
+    public Boolean updateAccount(AccountDTO dto){
+        Optional<Account> opt_acc = accountRepo.findById(dto.getAccID());
+        if (opt_acc.isPresent()){
+            AtomicInteger accType = new AtomicInteger(0); //holder for type
 
+            Account acc = updateAccountSQLite(opt_acc.get(), dto, accType);
+            
+            System.out.println("LIMIT: "+ dto.getLimit());
+            genericSyncService.syncUpdateToOracle(dto, "/api/account", resp->{
+                markAsSynced(acc.getAccID(), accountRepo);
+                if (accType.get() == 0){
+                    //expense
+                    markAsSynced(acc.getAccID(), expenseAccountRepo);
+                } else if (accType.get() == 1){
+                    //fund
+                    markAsSynced(acc.getAccID(), fundAccountRepo);
+                }
+            }, fail -> {
+                markAsUnsynced(acc.getAccID(), accountRepo);
+                if (accType.get() == 0){
+                    //expense
+                    markAsUnsynced(acc.getAccID(), expenseAccountRepo);
+                } else if (accType.get() == 1){
+                    //fund
+                    markAsUnsynced(acc.getAccID(), fundAccountRepo);
+                }
+            });
+        } else {
+            System.err.println("ERROR: Account not found for updating");
+        }
 
-    // //insert
-    // public Account createAccount(Account acc){
-    //     return genericEntityService.insertRecord(accountRepo, acc, syncUrl);
-    // }
+        return true;
+
+    }
+
+    @Transactional
+    public Account updateAccountSQLite(Account acc, AccountDTO dto, AtomicInteger accType){        
+
+            acc.setAccName(dto.getAccName());
+            acc.setDescription(dto.getDescription());
+            acc.setIsSynced(0);            
+
+            //setting the account category
+            if (expenseAccountRepo.existsById(acc.getAccID())){
+                ExpenseAccount expAcc = expenseAccountRepo.findById(acc.getAccID()).get();
+                dto.setCategory(expAcc.getExpenseCategory());
+                accType.set(0); //0 is expense
+                expAcc.setSpendingLimit(dto.getLimit()); //updating spending limit
+                expenseAccountRepo.save(expAcc); //saving
+            } else if (fundAccountRepo.existsById(acc.getAccID())){
+                FundAccount fundAcc = fundAccountRepo.findById(acc.getAccID()).get();
+                dto.setCategory(fundAcc.getFundType());
+                accType.set(1); //1 is fund
+                fundAcc.setMinimumLimit(dto.getLimit()); //updating minimum limit
+                fundAccountRepo.save(fundAcc); //saving
+            }
+
+            return accountRepo.save(acc); //saving entity
+
+    }
 
     // //update
     // public Boolean updateAccount(Account acc){

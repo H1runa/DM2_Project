@@ -34,14 +34,14 @@ public class AccountController {
         }
     }
 
-    // @PutMapping("")
-    // public ResponseEntity<Boolean> updateAccount(@RequestBody Account entity) {
-    //     try{
-    //         return ResponseEntity.ok(accountService.updateAccount(entity));
-    //     } catch(Exception e){
-    //         return ResponseEntity.status(500).body(false);
-    //     }
-    // }
+    @PutMapping("")
+    public ResponseEntity<Boolean> updateAccount(@RequestBody AccountDTO entity) {
+        try{
+            return ResponseEntity.ok(accountService.updateAccount(entity));
+        } catch(Exception e){
+            return ResponseEntity.status(500).body(false);
+        }
+    }
 
     // @DeleteMapping("/{id}")
     // public ResponseEntity<Boolean> deleteAccount(@PathVariable Long id){
