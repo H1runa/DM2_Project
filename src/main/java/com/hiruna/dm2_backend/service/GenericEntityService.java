@@ -4,14 +4,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
-import org.aspectj.weaver.bcel.AtAjAttributes;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
-
-import com.hiruna.dm2_backend.data.model.AppUser;
-import com.hiruna.dm2_backend.data.model.BillReminder;
 import com.hiruna.dm2_backend.interfaces.SyncModel;
 import com.hiruna.dm2_backend.interfaces.SyncRepo;
 import com.hiruna.dm2_backend.service.sync_service.GenericSyncService;
@@ -36,12 +31,7 @@ public class GenericEntityService {
         Optional<T> ret_entity = repo.findById(entity.getId());
         if (ret_entity.isPresent()){
             T got_entity = ret_entity.get();
-            entityUpdater.accept(got_entity, entity);
-            // got_entity.setRemindName(reminder.getRemindName());
-            // got_entity.setDeadline(reminder.getDeadline());
-            // got_entity.setStatus(reminder.getStatus());                        
-            // got_entity.setIsSynced(0);
-            // got_entity.setIsDeleted(reminder.getIsDeleted());
+            entityUpdater.accept(got_entity, entity);            
 
             repo.save(got_entity);
 
@@ -51,8 +41,7 @@ public class GenericEntityService {
             }, err -> {
                 markAsUnsynced(got_entity, repo);
                 state.set(false);
-            });
-            // genericSyncService.syncUpdateToOracle(got_rem,"/api/billreminder" ,resp -> markAsSynced(got_rem.getRemindID()), err -> markAsUnsynced(got_rem.getRemindID()));
+            });           
             return state.get();
         } else {
             System.out.println("ERROR: Failed to update entity");            
