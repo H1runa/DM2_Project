@@ -68,6 +68,17 @@ public class BillReminderController {
             return ResponseEntity.status(500).body(e.getMessage());
         }
     }
+
+    //getUpcomingBillReminders
+    @GetMapping("/{id}/getupcomingreminders")
+    public ResponseEntity<?> getUpcomingBillReminders(@PathVariable Long id) {
+        try{
+            return ResponseEntity.ok(billReminderService.getUpcomingBillReminders(id));
+        } catch (Exception e){
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+    }
+    
     
     
 }
