@@ -96,11 +96,11 @@
 				<artifactId>flyway-maven-plugin</artifactId>
 				<version>11.15.0</version>
 				<configuration>
-					<url>jdbc:oracle:thin:@localhost:1521:XE</url>
-					<user>system</user>
-					<password>123456</password>
+					<url>jdbc:sqlite:local_db.db</url>
+					<user>sa</user>
+					<password></password>
 					<locations>
-						<location>classpath:db/migration</location>
+						<location>classpath:db/migration/sqlite</location>
 					</locations>
 				</configuration>
 			</plugin>

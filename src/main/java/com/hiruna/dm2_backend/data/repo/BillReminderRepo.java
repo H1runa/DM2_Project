@@ -1,6 +1,7 @@
 package com.hiruna.dm2_backend.data.repo;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,4 +17,8 @@ public interface BillReminderRepo extends SyncRepo<BillReminder>{
     List<BillReminder> findByIsSynced(int isSynced);
     @Override    
     List<BillReminder> findByIsDeleted(int isDeleted);
+
+    Boolean existsByRemindName(String remindName);
+
+    Optional<BillReminder> findByRemindName(String remindName);
 }
