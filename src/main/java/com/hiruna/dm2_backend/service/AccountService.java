@@ -2,13 +2,17 @@ package com.hiruna.dm2_backend.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.mapping.AccessOptions.SetOptions.Propagation;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import com.hiruna.dm2_backend.data.dto.AccountDTO;
 import com.hiruna.dm2_backend.data.model.Account;
@@ -33,15 +37,17 @@ public class AccountService {
     private String syncUrl;
     @PersistenceContext
     private EntityManager entityManager;
+    private WebClient webclient;
     private AccountService self;
 
-    public AccountService(GenericSyncService genericSyncService, AccountRepo accountRepo, ExpenseAccountRepo expenseAccountRepo, FundAccountRepo fundAccountRepo, @Lazy AccountService accountService){
+    public AccountService(GenericSyncService genericSyncService, AccountRepo accountRepo, ExpenseAccountRepo expenseAccountRepo, FundAccountRepo fundAccountRepo, @Lazy AccountService accountService, WebClient.Builder builder){
         this.genericSyncService=genericSyncService;
         this.accountRepo=accountRepo;
         this.expenseAccountRepo=expenseAccountRepo;
         this.fundAccountRepo=fundAccountRepo;
         this.self=accountService;
         this.syncUrl="/api/account";
+        this.webclient=builder.baseUrl("http://localhost:8002/oracle").build();
     }
 
     //insert
@@ -149,7 +155,7 @@ public class AccountService {
         }
     }
 
-    //delete
+    //delete local record
     public <T extends SyncModel> void deleteRecord(JpaRepository<T, Long> repo, Long id){
         repo.deleteById(id);        
     }
@@ -216,20 +222,80 @@ public class AccountService {
 
     }
 
-    // //update
-    // public Boolean updateAccount(Account acc){
-    //     return genericEntityService.updateRecord(accountRepo, acc, syncUrl, (entity, updated)->{
-    //         entity.setAccName(updated.getAccName());
-    //         entity.setDescription(updated.getDescription());
-    //         entity.setBalance(updated.getBalance());
-    //         // entity.setCreatedDate(updated.getCreatedDate());
-    //         // entity.setStatus(updated.getStatus());
-    //         entity.setInitialAmount(updated.getInitialAmount());
-    //         entity.setIsSynced(updated.getIsSynced());
-    //         entity.setIsDeleted(updated.getIsDeleted());
-    //     });
-    // }
+    //delete
+    public Boolean deleteAccount(Long id){
 
+        // String category = null;
+        AtomicReference<String> category = new AtomicReference<String>();
+
+        if (accountRepo.existsById(id)){
+            deleteAccountSQLite(id, category);
+        } else {
+            System.err.println("ERROR: Account not found to delete");
+            return false;
+        }
+
+        // deleteAccountSQLite(id, category);
+
+        AtomicBoolean bool = new AtomicBoolean(false);
+        self.syncDeleteToOracle(id, category.get() ,"/api/account", success->{            
+            if (success){
+                deleteRecord(accountRepo, id);
+                if (expenseAccountRepo.existsById(id)){
+                    //expense
+                    deleteRecord(expenseAccountRepo, id);
+                } else if (fundAccountRepo.existsById(id)){
+                    //fund
+                    deleteRecord(fundAccountRepo, id);
+                }
+                bool.set(true);
+                System.out.println("Account deleted");
+            } else {
+                System.err.println("Failed to delete on Oracle");                
+            }            
+        });
+
+        return bool.get();
+
+    }
+
+    @Transactional
+    public void deleteAccountSQLite(Long id, AtomicReference<String> category){
+        Account acc = accountRepo.findById(id).get();
+        acc.setIsDeleted(1);
+        accountRepo.save(acc);
+        if (expenseAccountRepo.existsById(id)){
+            //expense
+            ExpenseAccount expAcc = expenseAccountRepo.findById(id).get();
+            expAcc.setIsDeleted(1);
+            expenseAccountRepo.save(expAcc);
+            category.set(expAcc.getExpenseCategory());
+        } else if (fundAccountRepo.existsById(id)){
+            //fund
+            FundAccount fundAcc = fundAccountRepo.findById(id).get();
+            fundAcc.setIsDeleted(1);
+            fundAccountRepo.save(fundAcc);   
+            category.set(fundAcc.getFundType());
+        }
+    }
+
+    //cant use genericsyncservice because we need to pass category only for this specific case
+    public void syncDeleteToOracle(Long id, String category , String syncUrl,  Consumer<Boolean> success){
+        webclient.delete()
+            .uri(syncUrl+"/"+id+"/"+category)
+            .retrieve()
+            .bodyToMono(Boolean.class)
+            .doOnSuccess(resp -> {
+                System.out.println("Synced deletion to Oracle");
+                System.out.println(resp);
+                success.accept(resp);
+            }).doOnError(err-> {
+                System.err.println("ERROR: Could not delete");
+            })
+            .block();
+    }
+
+    
     // //delete
     // public Boolean deleteAccount(Long id){
     //     return genericEntityService.deleteRecord(accountRepo, id, syncUrl);

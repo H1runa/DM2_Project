@@ -43,14 +43,14 @@ public class AccountController {
         }
     }
 
-    // @DeleteMapping("/{id}")
-    // public ResponseEntity<Boolean> deleteAccount(@PathVariable Long id){
-    //     try{
-    //         return ResponseEntity.ok(accountService.deleteAccount(id));
-    //     } catch(Exception e){
-    //         return ResponseEntity.status(500).body(false);
-    //     }
-    // }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Boolean> deleteAccount(@PathVariable Long id){
+        try{
+            return ResponseEntity.ok(accountService.deleteAccount(id));
+        } catch(Exception e){
+            return ResponseEntity.status(500).body(false);
+        }
+    }
 
     // @PostMapping("/sync")
     // public void syncAll() {
