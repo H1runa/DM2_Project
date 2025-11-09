@@ -233,9 +233,7 @@ public class AccountService {
         } else {
             System.err.println("ERROR: Account not found to delete");
             return false;
-        }
-
-        // deleteAccountSQLite(id, category);
+        }        
 
         AtomicBoolean bool = new AtomicBoolean(false);
         self.syncDeleteToOracle(id, category.get() ,"/api/account", success->{            
@@ -295,13 +293,123 @@ public class AccountService {
             .block();
     }
 
-    
-    // //delete
-    // public Boolean deleteAccount(Long id){
-    //     return genericEntityService.deleteRecord(accountRepo, id, syncUrl);
-    // }
-
     // //sync all
+    public void syncAll(){
+        List<Account> list = accountRepo.findByIsSynced(0);
+
+        if (!list.isEmpty()){
+            for (Account acc : list) {
+                AccountDTO dto = new AccountDTO();
+                
+                dto.setAccID(acc.getAccID());
+                dto.setAccName(acc.getAccName());
+                dto.setDescription(acc.getDescription());
+                dto.setInitialAmount(acc.getInitialAmount());
+                dto.setUserID(acc.getUserID());
+
+                if (expenseAccountRepo.existsById(acc.getAccID())){
+                    //expense
+                    dto.setAccountType("Expense");
+
+                    ExpenseAccount expAcc = expenseAccountRepo.findById(acc.getAccID()).get();
+                    dto.setCategory(expAcc.getExpenseCategory());
+                    dto.setLimit(expAcc.getSpendingLimit());
+
+                } else if (fundAccountRepo.existsById(acc.getAccID())){
+                    //fund
+                    dto.setAccountType("Fund");
+
+                    FundAccount fundAcc = fundAccountRepo.findById(acc.getAccID()).get();
+                    dto.setCategory(fundAcc.getFundType());
+                    dto.setLimit(fundAcc.getMinimumLimit());
+                }
+
+                if (genericSyncService.checkIfExists(acc.getAccID(), "/api/account")){
+                    //calling update method
+                    genericSyncService.syncUpdateToOracle(dto, "/api/account", resp->{
+                        markAsSynced(acc.getAccID(), accountRepo);
+                        if (dto.getAccountType().equals("Expense")){
+                            //expense
+                            markAsSynced(acc.getAccID(), expenseAccountRepo);
+                        } else if (dto.getAccountType().equals("Fund")){
+                            //fund
+                            markAsSynced(acc.getAccID(), fundAccountRepo);
+                        }
+                    }, fail -> {
+                        markAsUnsynced(acc.getAccID(), accountRepo);
+                        if (dto.getAccountType().equals("Expense")){
+                            //expense
+                            markAsUnsynced(acc.getAccID(), expenseAccountRepo);
+                        } else if (dto.getAccountType().equals("Fund")){
+                            //fund
+                            markAsUnsynced(acc.getAccID(), fundAccountRepo);
+                        }
+                    });
+                } else {
+                    //calling insert method
+                    genericSyncService.syncInsertToOracle(dto, acc.getAccID(), "/api/account", ret_entity->{
+                        markAsSynced(acc.getId(), accountRepo);
+                        if (dto.getAccountType().equals("Expense")){                           
+                            markAsSynced(acc.getId(), expenseAccountRepo);
+                        } else if (dto.getAccountType().equals("Fund")){
+                            markAsSynced(acc.getId(), fundAccountRepo);
+                        }
+                    }, id -> {
+                        System.err.println("SYNC ERROR: Deleted records because they failed to sync over to Oracle");
+                        deleteRecord(accountRepo, acc.getId());
+                        if (dto.getAccountType().equals("Expense")){
+                            deleteRecord(expenseAccountRepo, acc.getId());
+                        } else if (dto.getAccountType().equals("Fund")){
+                            deleteRecord(fundAccountRepo, acc.getId());
+                        }
+                    });
+                }                
+
+                System.out.println("SYNC: Synced Account");
+            }
+        }
+
+        List<Account> list_to_delete = accountRepo.findByIsDeleted(1);
+
+        if(!list_to_delete.isEmpty()){
+            for (Account acc : list_to_delete){
+                String category = null;
+
+                if (expenseAccountRepo.existsById(acc.getAccID())){
+                    //expense
+                    ExpenseAccount expAcc = expenseAccountRepo.findById(acc.getAccID()).get();
+                    category = expAcc.getExpenseCategory();
+                } else if (fundAccountRepo.existsById(acc.getAccID())){
+                    //fund
+                    FundAccount fundAcc = fundAccountRepo.findById(acc.getAccID()).get();
+                    category = fundAcc.getFundType();
+                }
+
+                self.syncDeleteToOracle(acc.getAccID(), category ,"/api/account", success->{            
+                    if (success){
+                        deleteRecord(accountRepo, acc.getAccID());
+                        if (expenseAccountRepo.existsById(acc.getAccID())){
+                            //expense
+                            deleteRecord(expenseAccountRepo, acc.getAccID());
+                        } else if (fundAccountRepo.existsById(acc.getAccID())){
+                            //fund
+                            deleteRecord(fundAccountRepo, acc.getAccID());
+                        }                        
+                        System.out.println("Account deleted");
+                    } else {
+                        System.err.println("Failed to delete on Oracle");                
+                    }            
+                });
+
+                System.out.println("SYNC: Synced Account Deleted");
+
+            }
+        }
+
+
+    }
+
+
     // public void syncAll(){
     //     genericEntityService.syncAll(accountRepo, syncUrl);
     // }        

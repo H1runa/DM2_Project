@@ -52,10 +52,10 @@ public class AccountController {
         }
     }
 
-    // @PostMapping("/sync")
-    // public void syncAll() {
-    //     accountService.syncAll();
-    // }
+    @PostMapping("/sync")
+    public void syncAll() {
+        accountService.syncAll();
+    }
     
     
 }
