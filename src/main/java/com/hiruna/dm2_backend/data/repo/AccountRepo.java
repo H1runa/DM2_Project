@@ -1,6 +1,7 @@
 package com.hiruna.dm2_backend.data.repo;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
@@ -13,4 +14,6 @@ public interface AccountRepo extends SyncRepo<Account> {
     List<Account> findByIsSynced(int isSynced);
     @Override
     List<Account> findByIsDeleted(int isDeleted);
+
+    Optional<List<Account>> findByUserID(Long userID);
 }

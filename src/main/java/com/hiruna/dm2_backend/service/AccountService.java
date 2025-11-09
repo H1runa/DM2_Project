@@ -1,6 +1,9 @@
 package com.hiruna.dm2_backend.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -407,6 +410,42 @@ public class AccountService {
         }
 
 
+    }
+
+    //viewAccounts
+    public List<Map<String, Object>> viewAccounts(String category, Long userID){
+        List<Map<String, Object>> list = new ArrayList<>();            
+        
+        Optional<List<Account>> opt_list = accountRepo.findByUserID(userID);
+        if (opt_list.isPresent()){
+            List<Account> acc_list = opt_list.get();
+            for (Account acc : acc_list){
+                Map<String,Object> item = new HashMap<>();
+
+                item.put("accName", acc.getAccName());
+                item.put("description", acc.getDescription());
+                item.put("balance", acc.getBalance());
+                item.put("createdDate", acc.getCreatedDate());
+                item.put("status", acc.getStatus());
+                item.put("initialAmount", acc.getInitialAmount());
+
+                Optional<ExpenseAccount> opt_exp = expenseAccountRepo.findById(acc.getAccID());
+                Optional<FundAccount> opt_fund = fundAccountRepo.findById(acc.getAccID());
+                if (opt_exp.isPresent() && opt_exp.get().getExpenseCategory().equals(category)){
+                    item.put("spendingLimit", opt_exp.get().getSpendingLimit());
+                } else if (opt_fund.isPresent() && opt_fund.get().getFundType().equals(category)){
+                    item.put("minimumLimit", opt_fund.get().getMinimumLimit());
+                }
+                
+                list.add(new HashMap<>(item));
+
+            }
+
+            return list;
+
+        } else {
+            throw new RuntimeException("NOT_FOUND");
+        }        
     }
 
 

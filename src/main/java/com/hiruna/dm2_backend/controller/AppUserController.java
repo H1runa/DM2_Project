@@ -13,6 +13,9 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 
@@ -61,6 +64,21 @@ public class AppUserController {
     public void syncAll() {
         appUserService.syncAll();        
     }
+
+    //userAccountView
+    @GetMapping("/{id}/accountnames")
+    public ResponseEntity<?> userAccountView(@PathVariable Long id) {
+        try{
+            return ResponseEntity.ok(appUserService.userAccountView(id));
+        } catch(Exception e){
+            if (e.getMessage().equals("NOT_FOUND")){
+                return ResponseEntity.status(404).body("NOT_FOUND");
+            } else {
+                return ResponseEntity.status(505).body(e.getMessage());
+            }
+        }
+    }
+    
     
     
 }

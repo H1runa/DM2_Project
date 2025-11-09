@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 
@@ -56,6 +59,20 @@ public class AccountController {
     public void syncAll() {
         accountService.syncAll();
     }
+
+    @GetMapping("/{category}/{id}/viewaccounts")
+    public ResponseEntity<?> viewAccounts(@PathVariable String category, @PathVariable Long id) {
+        try{
+            return ResponseEntity.ok(accountService.viewAccounts(category, id));
+        } catch(Exception e){
+            if (e.getMessage().equals("NOT_FOUND")){
+                return ResponseEntity.status(404).body(e.getMessage());
+            } else {
+                return ResponseEntity.status(500).body(e.getMessage());
+            }
+        }
+    }
+    
     
     
 }

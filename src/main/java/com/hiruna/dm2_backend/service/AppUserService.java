@@ -1,5 +1,9 @@
 package com.hiruna.dm2_backend.service;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 import com.hiruna.dm2_backend.data.model.AppUser;
 import com.hiruna.dm2_backend.data.repo.AppUserRepo;
@@ -37,5 +41,18 @@ public class AppUserService {
     //syncing everything
     public void syncAll(){
         genericEntityService.syncAll(appUserRepo, "/api/appuser");
+    }
+
+    public Map<String, Object> userAccountView(Long id){
+        Map<String, Object> obj = new HashMap<>();
+        Optional<AppUser> opt = appUserRepo.findById(id);
+        if (opt.isPresent()){
+            AppUser user = opt.get();
+            obj.put("accountName", user.getAccountName());
+        } else {
+            throw new RuntimeException("NOT_FOUND");
+        }
+
+        return obj;
     }
 }
