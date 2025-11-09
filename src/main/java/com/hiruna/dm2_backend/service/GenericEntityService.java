@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import com.hiruna.dm2_backend.interfaces.SyncModel;
@@ -18,23 +19,33 @@ import jakarta.transaction.Transactional;
 @Service
 public class GenericEntityService {
     private GenericSyncService genericSyncService;
+    private GenericEntityService self;
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    public GenericEntityService(GenericSyncService genericSyncService){
+    public GenericEntityService(GenericSyncService genericSyncService, @Lazy GenericEntityService self){
         this.genericSyncService=genericSyncService;
+        this.self=self;
     };
     
     //inserting records
-    @Transactional
+    
     public <T extends SyncModel> T insertRecord(JpaRepository<T, Long> repo, T entity, String syncUrl){
         // T saved_record = repo.save(entity);
+        
+        self.insertRecordSQLite(entity);
+        genericSyncService.syncInsertToOracle(entity, entity.getId(), syncUrl, success -> {markAsSynced(entity, repo);}, id -> {deleteRecord(repo, id);});
+        return entity;
+    }
+
+    //inserting to sqlite
+    @Transactional
+    public <T extends SyncModel> T insertRecordSQLite(T entity){
         entityManager.persist(entity);
         entityManager.flush();
         entityManager.refresh(entity);
 
-        genericSyncService.syncInsertToOracle(entity, entity.getId(), syncUrl, success -> {markAsSynced(entity, repo);}, id -> {deleteRecord(repo, id);});
         return entity;
     }
 
