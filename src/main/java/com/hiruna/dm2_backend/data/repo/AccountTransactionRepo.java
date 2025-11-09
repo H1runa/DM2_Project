@@ -13,5 +13,7 @@ public interface AccountTransactionRepo extends SyncRepo<AccountTransaction> {
     @Override
     List<AccountTransaction> findByIsSynced(int isSynced);
     @Override    
-    List<AccountTransaction> findByIsDeleted(int isDeleted);    
+    List<AccountTransaction> findByIsDeleted(int isDeleted);   
+    
+    List<AccountTransaction> findByAccID(Long accID); 
 }

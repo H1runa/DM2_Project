@@ -1,5 +1,7 @@
 package com.hiruna.dm2_backend.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.hiruna.dm2_backend.data.model.BillReminder;
@@ -40,4 +42,9 @@ public class BillReminderService {
     public void syncAll(){       
         genericEntityService.syncAll(billReminderRepo, "/api/billreminder");
     }    
+
+    //viewBillReminder
+    public List<BillReminder> viewBillReminder(Long userID){
+        return billReminderRepo.findByUserID(userID);
+    }
 }

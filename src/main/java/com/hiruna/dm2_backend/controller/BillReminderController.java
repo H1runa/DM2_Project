@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 @RestController
@@ -54,6 +57,16 @@ public class BillReminderController {
     @PostMapping("/sync")
     public void syncAll() {
         billReminderService.syncAll();
+    }
+    
+    //viewBillReminder
+    @GetMapping("/{id}/viewbillreminder")
+    public ResponseEntity<?> viewBillReminder(@PathVariable Long id) {
+        try{
+            return ResponseEntity.ok(billReminderService.viewBillReminder(id));
+        } catch(Exception e){
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
     }
     
     

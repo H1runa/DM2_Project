@@ -1,5 +1,6 @@
 package com.hiruna.dm2_backend.service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -132,6 +133,12 @@ public class AccountTransactionService {
         entityManager.refresh(transaction);
 
         return transaction;
+    }
+
+    //viewTransaction
+    public List<AccountTransaction> viewTransaction(Long accID){
+        List<AccountTransaction> list = accountTransactionRepo.findByAccID(accID);
+        return list;
     }
 
 }

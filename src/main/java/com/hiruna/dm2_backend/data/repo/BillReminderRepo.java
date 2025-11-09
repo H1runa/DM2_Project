@@ -21,4 +21,6 @@ public interface BillReminderRepo extends SyncRepo<BillReminder>{
     Boolean existsByRemindName(String remindName);
 
     Optional<BillReminder> findByRemindName(String remindName);
+
+    List<BillReminder> findByUserID(Long userID);
 }
