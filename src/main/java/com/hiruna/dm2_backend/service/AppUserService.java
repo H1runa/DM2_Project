@@ -1,6 +1,7 @@
 package com.hiruna.dm2_backend.service;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -54,5 +55,19 @@ public class AppUserService {
         }
 
         return obj;
+    }
+
+    //login
+    public Boolean userLogin(String accountName, String password){
+        List<AppUser> list = appUserRepo.findByAccountName(accountName);
+        if (list.size()>1){
+            throw new RuntimeException("TOO_MANY");
+        }
+        AppUser user = list.get(0);
+        if (password.equals(user.getPassword())){
+            return true;
+        } else {
+            return false;
+        }
     }
 }

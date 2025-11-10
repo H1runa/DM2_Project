@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 
 
@@ -78,6 +79,17 @@ public class AppUserController {
             }
         }
     }
+
+    //user login
+    @GetMapping("/login")
+    public ResponseEntity<Boolean> getMethodName(@RequestParam String accountName, @RequestParam String password) {
+        try{
+            return ResponseEntity.ok(appUserService.userLogin(accountName, password));
+        } catch (Exception e){
+            return ResponseEntity.ok(false);
+        }
+    }
+    
     
     
     

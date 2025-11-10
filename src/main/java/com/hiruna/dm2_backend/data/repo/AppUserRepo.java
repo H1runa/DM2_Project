@@ -14,4 +14,6 @@ public interface AppUserRepo  extends SyncRepo<AppUser>{
     List<AppUser> findByIsSynced(int isSynced);
     @Override
     List<AppUser> findByIsDeleted(int isDeleted);
+
+    List<AppUser> findByAccountName(String accountName);
 }
