@@ -14,4 +14,6 @@ public interface SavingGoalRepo extends SyncRepo<SavingGoal> {
     List<SavingGoal> findByIsSynced(int isSynced);
     @Override    
     List<SavingGoal> findByIsDeleted(int isDeleted);
+
+    List<SavingGoal> findByAccID(Long accID);
 }
