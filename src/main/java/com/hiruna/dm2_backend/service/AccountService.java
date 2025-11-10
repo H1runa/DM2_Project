@@ -435,6 +435,8 @@ public class AccountService {
                     item.put("spendingLimit", opt_exp.get().getSpendingLimit());
                 } else if (opt_fund.isPresent() && opt_fund.get().getFundType().equals(category)){
                     item.put("minimumLimit", opt_fund.get().getMinimumLimit());
+                } else {
+                    continue;
                 }
                 
                 list.add(new HashMap<>(item));
